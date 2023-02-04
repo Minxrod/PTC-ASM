@@ -1,0 +1,1 @@
+'only works if PTC->Write ProgramJ$="★"*36+"ワog🅑"COLSET "GRP",0,J$
