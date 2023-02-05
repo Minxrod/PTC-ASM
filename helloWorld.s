@@ -33,4 +33,4 @@ printChar:
 cursorOfs: 
  .word 0
 testString: 
- .asciz "Hello World" @ will naturally be null terminated
+ .asciz "Hello World"
