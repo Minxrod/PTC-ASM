@@ -12,6 +12,69 @@
 .equ consoleTileBuffer, 0x0274999c
 .equ consoleTileBackBuffer, 0x0274b9f8
 
+.equ VRAM_Base, 0x06000000
+@ Upper screen BG layers + characters
+.equ VRAM_BG_Upper_Base, VRAM_Base
+.equ VRAM_Upper_ConsoleTile, VRAM_Base + 0x0
+.equ VRAM_Upper_ConsoleBackTile, VRAM_Base + 0x2000
+.equ VRAM_Upper_BG0Tile, VRAM_Base + 0x4000
+.equ VRAM_Upper_BG1Tile, VRAM_Base + 0x6000
+.equ ChrBGF0U, VRAM_Base + 0x8000
+.equ ChrBGF1U, VRAM_Base + 0xa000
+.equ ChrBGF2U, VRAM_Base + 0xc000 @ normally unused
+.equ ChrBGF3U, VRAM_Base + 0xe000 @ normally unused
+.equ ChrBGD0U, VRAM_Base + 0x10000
+.equ ChrBGD1U, VRAM_Base + 0x12000
+.equ ChrBGD2U, VRAM_Base + 0x14000 @ normally inaccessible
+.equ ChrBGD3U, VRAM_Base + 0x16000 @ normally inaccessible
+.equ ChrBGU0U, VRAM_Base + 0x18000
+.equ ChrBGU1U, VRAM_Base + 0x1a000
+.equ ChrBGU2U, VRAM_Base + 0x1c000
+.equ ChrBGU3U, VRAM_Base + 0x1e000
+@ Lower screen BG layers + characters
+.equ VRAM_BG_Lower_Base, VRAM_Base + 0x200000
+.equ VRAM_Lower_ConsoleTile, VRAM_BG_Lower_Base + 0x0
+.equ VRAM_Lower_ConsoleBackTile, VRAM_BG_Lower_Base + 0x2000
+.equ VRAM_Lower_BG0Tile, VRAM_BG_Lower_Base + 0x4000
+.equ VRAM_Lower_BG1Tile, VRAM_BG_Lower_Base + 0x6000
+.equ ChrBGF0L, VRAM_BG_Lower_Base + 0x8000
+.equ ChrBGF1L, VRAM_BG_Lower_Base + 0xa000
+.equ ChrBGF2L, VRAM_BG_Lower_Base + 0xc000 @ normally unused
+.equ ChrBGF3L, VRAM_BG_Lower_Base + 0xe000 @ normally unused
+.equ ChrBGD0L, VRAM_BG_Lower_Base + 0x10000
+.equ ChrBGD1L, VRAM_BG_Lower_Base + 0x12000
+.equ ChrBGD2L, VRAM_BG_Lower_Base + 0x14000 @ normally inaccessible
+.equ ChrBGD3L, VRAM_BG_Lower_Base + 0x16000 @ normally inaccessible
+.equ ChrBGU0L, VRAM_BG_Lower_Base + 0x18000
+.equ ChrBGU1L, VRAM_BG_Lower_Base + 0x1a000
+.equ ChrBGU2L, VRAM_BG_Lower_Base + 0x1c000
+.equ ChrBGU3L, VRAM_BG_Lower_Base + 0x1e000
+@ Upper screen OBJ characters
+.equ VRAM_OBJ_Upper_Base, VRAM_Base + 0x400000
+.equ ChrSPU0, VRAM_OBJ_Upper_Base + 0x0
+.equ ChrSPU1, VRAM_OBJ_Upper_Base + 0x2000
+.equ ChrSPU2, VRAM_OBJ_Upper_Base + 0x4000
+.equ ChrSPU3, VRAM_OBJ_Upper_Base + 0x6000
+.equ ChrSPU4, VRAM_OBJ_Upper_Base + 0x8000
+.equ ChrSPU5, VRAM_OBJ_Upper_Base + 0xa000
+.equ ChrSPU6, VRAM_OBJ_Upper_Base + 0xc000
+.equ ChrSPU7, VRAM_OBJ_Upper_Base + 0xe000
+.equ ChrSPS0U, VRAM_OBJ_Upper_Base + 0x10000
+.equ ChrSPS1U, VRAM_OBJ_Upper_Base + 0x12000
+@ Lower screen OBJ characters
+.equ VRAM_OBJ_Lower_Base, VRAM_Base + 0x600000
+.equ ChrSPD0, VRAM_OBJ_Lower_Base + 0x0
+.equ ChrSPD1, VRAM_OBJ_Lower_Base + 0x2000
+.equ ChrSPD2, VRAM_OBJ_Lower_Base + 0x4000
+.equ ChrSPD3, VRAM_OBJ_Lower_Base + 0x6000
+.equ ChrSPK0, VRAM_OBJ_Lower_Base + 0x8000
+.equ ChrSPK1, VRAM_OBJ_Lower_Base + 0xa000
+.equ ChrSPK2, VRAM_OBJ_Lower_Base + 0xc000
+.equ ChrSPK3, VRAM_OBJ_Lower_Base + 0xe000
+.equ ChrSPS0L, VRAM_OBJ_Lower_Base + 0x10000
+.equ ChrSPS1L, VRAM_OBJ_Lower_Base + 0x12000
+
+
 @ use this to simplify getting addresses
 @ requires r11 already set!
 .macro du_addr reg, du_expected_addr
