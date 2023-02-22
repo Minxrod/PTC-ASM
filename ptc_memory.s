@@ -24,15 +24,22 @@
 @
 .equ DirectDat, 0x0217ff50
 
-.equ ArgumentStackPtr, DirectDat + 0x214
+@ Offsets from DirectDat that contain useful pointers
+.equ ArgumentStackPtrOfs, 0x214
+.equ ProgramDataPtrOfs, 0x21c
+.equ StringTablePtrOfs, 0x224
+.equ VariableTablePtrOfs, 0x228
+.equ ArrayTablePtrOfs, 0x22c
+.equ ConsoleDataPtrOfs, 0x230
 
-.equ consoleTextBuffer, 0x02748048
-.equ consoleTextBufferSize, 32 * 24 * 2
-.equ consoleTextColorBuffer, 0x0274931c
-.equ consoleTextBGColorBuffer, 0x02794638
+@ Console data blocks, contained within the console DU
+.equ ConsoleTextBuffer, 0x02748048
+.equ ConsoleTextBufferSize, 32 * 24 * 2
+.equ ConsoleTextColorBuffer, 0x0274931c
+.equ ConsoleTextBGColorBuffer, 0x02794638
 
-.equ consoleTileBuffer, 0x0274999c
-.equ consoleTileBackBuffer, 0x0274b9f8
+.equ ConsoleTileBuffer, 0x0274999c
+.equ ConsoleTileBackBuffer, 0x0274b9f8
 
 @
 @ Useful VRAM locations
