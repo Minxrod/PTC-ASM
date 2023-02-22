@@ -1,1 +1,1 @@
-'only works if PTC->Write ProgramJ$="★"*36+"□og🅑"COLSET "GRP",0,J$
+J$="★"*36+"□og🅑"IF !_ASM THEN COLSET "GRP",0,J$_ASM=TRUEIF LEN(LOADER$) THEN EXEC LOADER$?"Loaded ASM"

@@ -3,7 +3,7 @@ set -e
 ptctools="./../../python/ptctools/ptctools.py"
 
 if [[ $# < 1 ]]; then
-	echo "Usage: build ASMSOURCE PTCNAME"
+	echo "Usage: build ASMSOURCE asmloader.txt ASMLOADERNAME program.txt PROGRAMNAME"
 	exit
 fi
 
@@ -13,18 +13,21 @@ arm-none-eabi-objcopy -O binary out.elf out.bin
 rm out.elf
 
 if [[ $# < 2 ]]; then
-	echo "Provide PTCNAME to continue"
+	echo "Provide names to continue"
 	exit
 fi
 
-$ptctools encode launch.txt --name $2
+$ptctools encode $2 --name $3
+$ptctools encode $4 --name $5
 $ptctools encode out.bin --format GRP --name TEMPGRP0
 
-$ptctools pack $2.PTC -s 0x40000 --data-files TEMPGRP0.PTC
-$ptctools qr $2.PTC --merge
+$ptctools pack $3.PTC -s 0x40000 --data-files TEMPGRP0.PTC
+$ptctools qr $3.PTC --merge
+$ptctools qr $5.PTC --merge
 
-open $2#merged.png
+eog $3#merged.png $5#merged.png
 
 rm TEMPGRP0.PTC
 # rm out.bin
-rm $2#qr*
+rm $3#qr*
+rm $5#qr*
