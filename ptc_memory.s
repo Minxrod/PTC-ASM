@@ -1,8 +1,30 @@
-@ various useful addresses
+@ important addresses, do not modify
 .equ expectedEntry, 0x02676fdc
+.equ colsetReturn, 0x020354c8
 
 .equ ptcCharSize, 2
 .equ ptcNumSize, 4
+
+@
+@ Important/useful functions that live in TCM
+@ See https://petitcomputer.fandom.com/wiki/User_blog:Minxrod/Some_function_notes
+@
+
+@ Input:
+@ r0 - DirectDat
+@ r1 - Top of stack
+@ r2 - # args
+.equ parseCommandArgs, 0x01ffa160
+.equ parseFunctionArgs, 0x01ffa23c
+.equ parseFunctionVarargs, 0x01ffbb3c
+
+@
+@ Various data blocks contained within DUs
+@ See https://petitcomputer.fandom.com/wiki/User_blog:Minxrod/More_memory_research
+@
+.equ DirectDat, 0x0217ff50
+
+.equ ArgumentStackPtr, DirectDat + 0x214
 
 .equ consoleTextBuffer, 0x02748048
 .equ consoleTextBufferSize, 32 * 24 * 2
@@ -12,6 +34,10 @@
 .equ consoleTileBuffer, 0x0274999c
 .equ consoleTileBackBuffer, 0x0274b9f8
 
+@
+@ Useful VRAM locations
+@ See https://petitcomputer.fandom.com/wiki/User_blog:Minxrod/More_memory_research
+@
 .equ VRAM_Base, 0x06000000
 @ Upper screen BG layers + characters
 .equ VRAM_BG_Upper_Base, VRAM_Base
@@ -78,7 +104,7 @@
 @ use this to simplify getting addresses
 @ requires r11 already set!
 .macro du_addr reg, du_expected_addr
-	ldr \reg, =\du_expected_addr-expectedEntry+0x4 @idk why the +4 is so important but it is
+	ldr \reg, =\du_expected_addr-expectedEntry @idk why the +4 is so important but it is
 	add \reg, \reg, r11
 .endm
 
