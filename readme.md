@@ -38,6 +38,9 @@ I found loading the address into a register first and then branching
 with bx or blx to work. There's probably a better way to fix that, like by not
 abusing .org as I am, but I haven't fixed it yet.
 
+WARNING: If you clear or destroy the data in GRP0, your program WILL crash.
+Be very careful not to use ACLS, or GCLS on the page containing your code. 
+
 See peekpoke.s for an example program that uses each of these macros.
 You can build with `./build peekpoke.s ASM_MEM VRAMPOKE`
 

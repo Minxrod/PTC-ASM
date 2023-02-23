@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# check for PTCTOOLS
+if [ -z ${PTCTOOLS:+x} ]
+then
+	echo "Set PTCTOOLS variable first!"
+	echo "export PTCTOOLS=<path to ptctools.py>"
+	exit
+fi
+
 # commmon loader
 echo "Encoding common launcher _ASMLOAD"
 
@@ -12,6 +20,7 @@ if [[ $# < 1 ]]; then
 	exit
 fi
 
+# Actual ASM codes
 echo "Assembling file"
 arm-none-eabi-as $1 -o out.elf
 arm-none-eabi-objcopy -O binary out.elf out.bin
@@ -32,6 +41,7 @@ if [[ $# < 3 ]]; then
 	exit
 fi
 
+# Extra program (useful to have here for testing)
 $PTCTOOLS encode $3.txt
 $PTCTOOLS qr $3.PTC --merge
 

@@ -46,7 +46,8 @@ replaceFunctionFormat:
 
 @ PTC format:
 @ `POKE addr, value`
-@ Writes the 16-bit value contained in "value" to the given address.
+@ Writes the 16-bit value contained in `value` to the given address.
+@ addr should contain the address value divided by 4096, due to PTC's number format.
 @ 
 @ Internal format:
 @ in: r0 points to DirectDat
