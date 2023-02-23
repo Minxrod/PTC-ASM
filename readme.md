@@ -28,7 +28,8 @@ the output files.
 If assembly source and GRP are provided, will assemble and encode result into
 a GRP file with the given name.
 
-If all arguments are provided, will
+If all arguments are provided, will additionally build a second program. 
+(This is useful for writing programs that test the _ASMLOAD program.)
 
 # Writing
 
