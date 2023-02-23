@@ -1,33 +1,43 @@
 #!/bin/bash
 set -e
-ptctools="./../../python/ptctools/ptctools.py"
+
+# commmon loader
+echo "Encoding common launcher _ASMLOAD"
+
+$PTCTOOLS encode launch.txt --name _ASMLOAD
+$PTCTOOLS qr _ASMLOAD.PTC --merge
 
 if [[ $# < 1 ]]; then
-	echo "Usage: build ASMSOURCE asmloader.txt ASMLOADERNAME program.txt PROGRAMNAME"
+	echo "Usage: build ASMSOURCE ASMGRP [program.txt]"
 	exit
 fi
 
+echo "Assembling file"
 arm-none-eabi-as $1 -o out.elf
 arm-none-eabi-objcopy -O binary out.elf out.bin
 
 rm out.elf
 
 if [[ $# < 2 ]]; then
-	echo "Provide names to continue"
+	echo "Provide GRP name to continue"
 	exit
 fi
 
-$ptctools encode $2 --name $3
-$ptctools encode $4 --name $5
-$ptctools encode out.bin --format GRP --name TEMPGRP0
+# ASM data GRP
+$PTCTOOLS encode out.bin --format GRP --name $2
+$PTCTOOLS qr $2.PTC --merge
 
-$ptctools pack $3.PTC -s 0x40000 --data-files TEMPGRP0.PTC
-$ptctools qr $3.PTC --merge
-$ptctools qr $5.PTC --merge
+if [[ $# < 3 ]]; then
+	echo "Provide program file to continue"
+	exit
+fi
 
-eog $3#merged.png $5#merged.png
+$PTCTOOLS encode $3.txt
+$PTCTOOLS qr $3.PTC --merge
 
-rm TEMPGRP0.PTC
-# rm out.bin
+eog _ASMLOAD#merged.png $2#merged.png $3#merged.png
+
+rm out.bin
+rm _ASMLOAD#qr*
+rm $2#qr*
 rm $3#qr*
-rm $5#qr*
