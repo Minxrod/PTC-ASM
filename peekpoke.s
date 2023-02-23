@@ -1,15 +1,13 @@
-.org 0x400 
 @ this prevents the shifting addresses from breaking stuff maybe
 @ (it adds 0x400 zeros to the beginning of the grp)
+.org 0x400 
+
 .include "ptc_memory.s"
 
-@ notes:
-@ Addresses in this code should be +0
-@ DU addresses should use -expectedEntry+r11
-.equ cmdToReplace, 0x02186c98
-.equ funcToReplace, 0x0218c1f0
 @ cmd replaced is an empty slot (no loss of function)
-@ func replaced is TALKCHK, which is useless in the version this exploit works for
+.equ cmdToReplace, 0x02186c98
+@ func replaced is TALKCHK, which is useless in the version this exploit works in
+.equ funcToReplace, 0x0218c1f0
 
 start:
  bl calcOffsetAddress

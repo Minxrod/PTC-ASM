@@ -35,8 +35,6 @@ fi
 $PTCTOOLS encode $3.txt
 $PTCTOOLS qr $3.PTC --merge
 
-eog _ASMLOAD#merged.png $2#merged.png $3#merged.png
-
 rm out.bin
 rm _ASMLOAD#qr*
 rm $2#qr*
