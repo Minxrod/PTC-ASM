@@ -86,4 +86,6 @@ ARM reference:
 NDS/DSi reference:
 * https://www.problemkaputt.de/gbatek.htm
 
+Inspired by this:
+* https://github.com/zoogie/petit-compwner
 
