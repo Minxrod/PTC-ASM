@@ -4,23 +4,23 @@
 
 .include "ptc_memory.s"
 
-@ cmd replaced is an empty slot (no loss of function)
-.equ cmdToReplace, 0x02186c98
-@ func replaced is TALKCHK, which is useless in the version this exploit works in
-.equ funcToReplace, 0x0218c1f0
-
 start:
  bl calcOffsetAddress
  @ r11 = offset
  
  @ insert POKE code
- du_addr r0, cmdToReplace
- asm_addr r1, pokeString
- asm_addr r2, pokePTC
+ du_addr r0, cmdNull1
+ asm_addr r1, poke2String
+ asm_addr r2, poke2PTC
+ bl replaceFunctionFormat
+ 
+ du_addr r0, cmdNull2
+ asm_addr r1, poke4String
+ asm_addr r2, poke4PTC
  bl replaceFunctionFormat
  
  @ insert PEEK code
- du_addr r0, funcToReplace
+ du_addr r0, funcTalkchk
  asm_addr r1, peekString
  asm_addr r2, peekPTC
  bl replaceFunctionFormat
@@ -45,14 +45,14 @@ replaceFunctionFormat:
  ldmia sp!,{r4, r5, r6, pc}
 
 @ PTC format:
-@ `POKE addr, value`
+@ `POKE2 addr, value`
 @ Writes the 16-bit value contained in `value` to the given address.
 @ addr should contain the address value divided by 4096, due to PTC's number format.
 @ 
 @ Internal format:
 @ in: r0 points to DirectDat
 @ out: r0 is error code, or 0 if successful
-pokePTC:
+poke2PTC:
  stmdb sp!,{r4, lr}
  sub sp, sp, #16
  mov r1, sp
@@ -61,7 +61,7 @@ pokePTC:
  blx r4
  cmp r0, #0
  @ early exit if parser throws an error
- bne pokePTCEnd
+ bne poke2PTCEnd
  
  @ parser OK - extract values of arguments
  ldr r0, [sp, #0x4] @ addr
@@ -71,7 +71,37 @@ pokePTC:
  
  @ Return with no error
  mov r0, #0
-pokePTCEnd:
+poke2PTCEnd:
+ add sp, sp, #16
+ ldmia sp!,{r4, pc}
+
+@ PTC format:
+@ `POKE4 addr, value`
+@ Writes the 32-bit value contained in `value` to the given address.
+@ addr should contain the address value divided by 4096, due to PTC's number format.
+@ 
+@ Internal format:
+@ in: r0 points to DirectDat
+@ out: r0 is error code, or 0 if successful
+poke4PTC:
+ stmdb sp!,{r4, lr}
+ sub sp, sp, #16
+ mov r1, sp
+ mov r2, #2 @ POKE expects exactly 2 arguments
+ ldr r4, =parseCommandArgs
+ blx r4
+ cmp r0, #0
+ @ early exit if parser throws an error
+ bne poke4PTCEnd
+ 
+ @ parser OK - extract values of arguments
+ ldr r0, [sp, #0x4] @ addr
+ ldr r1, [sp, #0xc] @ value
+ str r1, [r0]
+ 
+ @ Return with no error
+ mov r0, #0
+poke4PTCEnd:
  add sp, sp, #16
  ldmia sp!,{r4, pc}
 
@@ -155,9 +185,13 @@ calcOffsetAddress:
  sub r11, r11, r0
  bx lr
  
-pokeString:
-wide_str 'P','O','K','E'
-.2byte 0,0,0,0
+poke2String:
+wide_str 'P','O','K','E','2'
+.2byte 0,0,0
+
+poke4String:
+wide_str 'P','O','K','E','4'
+.2byte 0,0,0
 
 peekString:
 wide_str 'P','E','E','K'

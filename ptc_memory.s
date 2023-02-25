@@ -32,6 +32,24 @@
 .equ ArrayTablePtrOfs, 0x22c
 .equ ConsoleDataPtrOfs, 0x230
 
+@ Instruction table entries
+
+@ Command table entries
+
+@ empty slots (no loss of function when filling)
+.equ cmdNull1, 0x02186c98
+.equ cmdNull2, 0x02187034
+.equ cmdNull3, 0x02187114
+.equ cmdNull4, 0x02187130
+.equ cmdNull5, 0x0218737c
+.equ cmdNull6, 0x0218745c
+
+@ Function table entries
+.equ funcTalkchk, 0x0218c1f0
+.equ funcBtrig, 0x0218c2d0
+
+@ Variable table entries
+
 @ Console data blocks, contained within the console DU
 .equ ConsoleTextBuffer, 0x02748048
 .equ ConsoleTextBufferSize, 32 * 24 * 2
