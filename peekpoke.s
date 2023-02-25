@@ -65,6 +65,10 @@ poke2PTC:
  
  @ parser OK - extract values of arguments
  ldr r0, [sp, #0x4] @ addr
+ cmp r0, #0 @ check for null ptr
+ moveq r0, #7 @ Illegal function call
+ beq poke2PTCEnd
+ 
  ldr r1, [sp, #0xc] @ value
  lsr r1, r1, #12 @ get integer portion
  strh r1, [r0]
@@ -96,6 +100,10 @@ poke4PTC:
  
  @ parser OK - extract values of arguments
  ldr r0, [sp, #0x4] @ addr
+ cmp r0, #0 @ check for null ptr
+ moveq r0, #7 @ Illegal function call
+ beq poke4PTCEnd
+
  ldr r1, [sp, #0xc] @ value
  str r1, [r0]
  
