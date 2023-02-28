@@ -25,8 +25,10 @@
 .equ DirectDat, 0x0217ff50
 
 @ Offsets from DirectDat that contain useful pointers
+.equ UnknownArgCountOfs, 0x210
 .equ ArgumentStackPtrOfs, 0x214
 .equ ProgramDataPtrOfs, 0x21c
+.equ UnknownCommandInfoOfs, 0x220
 .equ StringTablePtrOfs, 0x224
 .equ VariableTablePtrOfs, 0x228
 .equ ArrayTablePtrOfs, 0x22c
