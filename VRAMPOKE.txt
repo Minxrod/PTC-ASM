@@ -1,1 +1,1 @@
-if _ASM then @initacls:clearsysbeep=0'DO NOT FORGET TO LOAD YOUR'CODE TO GRP0 OR THIS WILL'CRASH!load "GRP0:ASM_MEM",0LOADER$="VRAMPOKE"exec "_ASMLOAD"@initvram=&h06000for i=0 to 65536 poke2 vram,i vsync 1next
+IF _ASM THEN @INITACLS:CLEARASMGRP$="ASM_MEM"LOADER$="VRAMPOKE"EXEC "_ASMLOAD"IF !RESULT THEN ?"Error: Missing _ASMLOAD"END@initvram=&h06000for i=0 to 65536 poke2 vram,i vsync 1next
