@@ -5,30 +5,154 @@
 .equ ptcCharSize, 2
 .equ ptcNumSize, 4
 
+@ Stuff that isn't PTC specific but is still useful
+.equ ioBase, 0x04000000
+.equ ioDISPCNT, ioBase
+.equ ioDISP3DCNT, ioBase + 0x60
+.equ ioPOWCNT1, ioBase + 0x304
+
+@ Background control
+.equ ioBG0CNT, ioBase + 0x8
+.equ ioBG1CNT, ioBase + 0xa
+.equ ioBG2CNT, ioBase + 0xc
+.equ ioBG3CNT, ioBase + 0xe
+
+@ A subset of the 3d commands
+.equ ioMATRIX_MODE, ioBase + 0x440
+.equ ioMATRIX_IDENTITY, ioBase + 0x454
+.equ ioMATRIX_LOAD_4x4, ioBase + 0x458
+.equ ioMATRIX_MULTIPLY_3x3, ioBase + 0x468
+.equ ioMATRIX_SCALE, ioBase + 0x46c
+.equ ioMATRIX_TRANS, ioBase + 0x470
+
+.equ ioVERTEX_COLOR, ioBase + 0x480
+.equ ioVERTEX_16BIT, ioBase + 0x48c
+.equ ioVERTEX_10BIT, ioBase + 0x490
+
+.equ ioVERTEX_BEGIN, ioBase + 0x500
+.equ ioVERTEX_END, ioBase + 0x504
+
+.equ ioSWAP_BUFFERS, ioBase + 0x540
+.equ ioVIEWPORT, ioBase + 0x580
+
+@
+@ Constants used by the interpreter
+@
+
+@ Error constants
+.equ errSYNTAX_ERROR, 0x1
+.equ errOUT_OF_RANGE, 0x2
+.equ errOUT_OF_MEMORY, 0x3
+.equ errILLEGAL_FUNCTION_CALL, 0x7
+.equ errMISSING_OPERAND, 0xa
+.equ errTYPE_MISMATCH, 0x12
+
 @
 @ Important/useful functions that live in TCM
 @ See https://petitcomputer.fandom.com/wiki/User_blog:Minxrod/Some_function_notes
 @
 
 @ Input:
-@ r0 - DirectDat
+@ r0 - mainDU
 @ r1 - Top of stack
 @ r2 - # args
 .equ parseCommandArgs, 0x01ffa160
 .equ parseFunctionArgs, 0x01ffa23c
 .equ parseFunctionVarargs, 0x01ffbb3c
 
+@ parse*Args stack offsets
+.equ stackTypeArg1, 0x0
+.equ stackValueArg1, 0x4
+.equ stackTypeArg2, 0x8
+.equ stackValueArg2, 0xc
+.equ stackTypeArg3, 0x10
+.equ stackValueArg3, 0x14
+.equ stackTypeArg4, 0x18
+.equ stackValueArg4, 0x1c
+.equ stackTypeArg5, 0x20
+.equ stackValueArg5, 0x24
+
+@ Input:
+@ r0 - mainDU
+.equ parseEvaluate, 0x01ff9a58
+@ Input:
+@ r0 - mainDU
+.equ parseWhitespace, 0x1ff9d90
+
+@ WARNING: not fully understood
+@ Input:
+@ r0 - mainDU
+@ r1 - ptr to 8 bytes space [unknown 2-2-4]
+@ r2 - ptr to 4 bytes space [unknown 4]
+@ r3 - ptr to 8 bytes space [unknown 4-4]
+.equ parseVarName, 0x1ff83e4
+@ WARNING: not fully understood
+@ Input:
+@ r0 - varTblPtr
+@ r1 - ptr to same 8 as r1 for parseVarName
+@ r2 - 0?
+@ r3 - Something that carries over from above? (ptr to 8 bytes?)
+@ Output:
+@ r0 - varEntryPtr
+.equ getVarEntryPtr, 0x01ffbd5c
+@ Input:
+@ r0 - ArrTblPtr
+@ r1 - array index
+@ Output:
+@ r0 - arrEntryPtr
+.equ getArrEntryPtr, 0x0203dc6c
+@ Input:
+@ r0 - ArrTblPtr
+@ r1 - array index
+@ Output:
+@ r0 - array data ptr
+.equ getArrDataPtr, 0x0203dd8c
+
+@
+@ Variable table entries and values
+@
+.equ varEntryTypeOfs, 0x0
+.equ varEntryValueOfs, 0x4 @ numbers only
+.equ varEntryIndexOfs, 0x4 @ for non-number types
+
+
+@ Variable types (simple)
+.equ varTypeNumber, 0
+.equ varTypeString, 1
+.equ varTypeArray, 2
+@ Variable types (complex)
+.equ varSpecificTypeNumber, 0
+.equ varSpecificTypeString, 1
+.equ varSpecificTypeNumArray, 2
+.equ varSpecificTypeStringArray, 3
+
+@
+@ Array table entries and values
+@
+.equ arrEntryTypeOfs, 0x0
+.equ arrEntryDimensionOfs, 0x1
+.equ arrEntryDimension1SizeOfs, 0x4
+.equ arrEntryDimension2SizeOfs, 0x8
+.equ arrEntryDataOffsetOfs, 0xc
+.equ arrEntrySize, 0x10
+
+@ Array types
+.equ arrTypeNumber, 0
+.equ arrTypeString, 1
+
 @
 @ Various data blocks contained within DUs
 @ See https://petitcomputer.fandom.com/wiki/User_blog:Minxrod/More_memory_research
 @
 .equ DirectDat, 0x0217ff50
+.equ MainDU, DirectDat
 
 @ Offsets from DirectDat that contain useful pointers
-.equ UnknownArgCountOfs, 0x210
+.equ CurCharOfs, 0x8
+.equ NextCharOfs, 0x210
 .equ ArgumentStackPtrOfs, 0x214
-.equ ProgramDataPtrOfs, 0x21c
-.equ UnknownCommandInfoOfs, 0x220
+.equ AlsoProgramDataPtrOfs, 0x21c @ ???
+.equ ProgramDataPtrOfs, 0x220
 .equ StringTablePtrOfs, 0x224
 .equ VariableTablePtrOfs, 0x228
 .equ ArrayTablePtrOfs, 0x22c
@@ -138,6 +262,11 @@
 .macro asm_addr reg, asm_expected_addr
 	ldr \reg, =\asm_expected_addr
 	add \reg, \reg, r11
+.endm
+
+.macro bptc reg, ptc_expected_addr
+	ldr \reg, =\ptc_expected_addr
+	blx \reg
 .endm
 
 @ recursive macro idea from here

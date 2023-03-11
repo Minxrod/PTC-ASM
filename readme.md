@@ -68,6 +68,13 @@ too many empty bytes at the start of the file if I set it to the real address.
 
 The adjusted address is stored into the given register.
 
+## bptc register, address
+Use this to branch to PTC internal functions. This is useful for parsing args
+from custom functions and commmands.
+
+The unmodified address is stored into the given register.
+
+
 ## wide_str char[,char[,char...]]
 A really stupid macro that adjusts a bunch of characters to match PTC's string
 format. Not suggested for most uses, but if you need a tiny alphabet string

@@ -64,7 +64,7 @@ poke2PTC:
  bne poke2PTCEnd
  
  @ parser OK - extract values of arguments
- ldr r0, [sp, #0x4] @ addr
+ ldr r0, [sp, #stackValueArg1] @ addr
  cmp r0, #0 @ check for null ptr
  moveq r0, #7 @ Illegal function call
  beq poke2PTCEnd
