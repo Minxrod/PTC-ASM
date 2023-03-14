@@ -177,7 +177,7 @@
 @ Variable table entries
 
 @ Console data blocks, contained within the console DU
-.equ ConsoleTextBuffer, 0x02748048
+.equ ConsoleTextBuffer, 0x0274804c
 .equ ConsoleTextBufferSize, 32 * 24 * 2
 .equ ConsoleTextColorBuffer, 0x0274931c
 .equ ConsoleTextBGColorBuffer, 0x02794638

@@ -56,7 +56,7 @@ replaceFunctionFormat:
 @ in: r0 points to DirectDat
 @ out: r0 is error code, or 0 if successful
 renderPTC:
- stmdb sp!,{r4, lr}
+ stmdb sp!,{r4, r11, lr}
  sub sp, sp, #8
  mov r1, sp
  mov r2, #1 @ RENDER expects one argument
@@ -88,10 +88,9 @@ renderDisable:
  bic r1, r1, #0xc @ turn off 3d hardware
  str r1, [r0]
  
- mov r0, #0
- b renderPTCEnd
+ b renderOK
 renderEnable:
- @ TODO: Label these magic values please? Until then refer to GBATEK
+ @ TODO; Label these magic values please? Until then refer to GBATEK
  ldr r1, =0xc00b
  ldr r0, =ioBG0CNT
  ldr r2, [r0]
@@ -128,9 +127,12 @@ renderOK:
  ldr r1, =ioSWAP_BUFFERS
  str r0, [r1]
  
+ bl copyConsoleBuffer
+ mov r0, #0
+  
 renderPTCEnd:
  add sp, sp, #8
- ldmia sp!,{r4, pc}
+ ldmia sp!,{r4, r11, pc}
 
 @ PTC format:
 @ `RMTX type,form,x,y,z`
@@ -453,6 +455,24 @@ copyWideStr:
  cmp r2, #0
  bne copyWideStr
  bx lr
+
+@ Copies from ConsoleTextBuffer to VRAM (in place of upper BGD layer)
+@ This is a hack to make the console usable with 3D stuff
+copyConsoleBuffer:
+ stmdb sp!, {r11, lr}
+ bl calcOffsetAddress
+ du_addr r1, ConsoleTileBuffer
+ ldr r2, =VRAM_Upper_ConsoleTile
+ ldr r3, =ConsoleTextBufferSize
+copyConsoleBufferLoop:
+ ldrh r0, [r1]
+ strh r0, [r2]
+ 
+ add r1, r1, #2
+ add r2, r2, #2
+ subs r3, r3, #2
+ bne copyConsoleBufferLoop
+ ldmia sp!, {r11, pc}
 
 @ copy r2 characters of r1 to r0 
 @ destroys r3
