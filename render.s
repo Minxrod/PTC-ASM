@@ -26,6 +26,12 @@ start:
  asm_addr r2, rpolyPTC
  bl replaceFunctionFormat
  
+ @ RCOLOR command
+ du_addr r0, cmdNull3
+ asm_addr r1, rcolorString
+ asm_addr r2, rcolorPTC
+ bl replaceFunctionFormat
+ 
  b end
 
 end:
@@ -129,7 +135,7 @@ renderOK:
  
  bl copyConsoleBuffer
  mov r0, #0
-  
+
 renderPTCEnd:
  add sp, sp, #8
  ldmia sp!,{r4, r11, pc}
@@ -346,7 +352,7 @@ rmtxRotateZ:
 @ PTC format:
 @ `RPOLY type,# vertices,varray_index`
 @ 
-@ type - tris, quads, tristrip, quadstrip [0-3]
+@ type - special, tris, quads, tristrip, quadstrip [-1,0-3]
 @ varray_index - numerical ID corresponding to array DIM order
 @ this is used instead of a name because...
 @  1) I don't know how the variable name parsing function works well enough
@@ -360,10 +366,6 @@ rmtxRotateZ:
 @   0 - (vx10) - packed VX10 data
 @   1 - (vx10) - packed VX10 data
 @   2 - (vx10, vc) - packed VX10 data + colors
-@   3 - (x,y,z) - just vertices (x,y,z)
-@   4 - (x,y,z,c) - vertices + colors
-@   5 - (x,y,z,u,v) - vertices + texcoords
-@   6 - (x,y,z,u,v,c) - vertices + texcoords + colors
 rpolyPTC:
  stmdb sp!,{r4, r5, r6, r10, r11, lr}
  sub sp, sp, #0x10
@@ -386,8 +388,11 @@ rpolyPTC:
  movne r0, #errTYPE_MISMATCH
  bne rpolyPTCEnd
  
- lsr r6, r1, #12 @ poly type
+ asr r6, r1, #12 @ poly type
  lsr r4, r3, #12 @ array id
+ 
+ cmp r6, #-1
+ beq rpolySpecialModel
  
  ldr r0, [r10, #ArrayTablePtrOfs]
  mov r1, r4
@@ -417,6 +422,8 @@ rpolyPTC:
  beq rpolyVX10
  
  ldr r0, [r5, #arrEntryDimension2SizeOfs]
+ cmp r0, #1
+ beq rpolyVX10
  
  mov r0, #errILLEGAL_FUNCTION_CALL
 rpolyPTCEnd:
@@ -444,6 +451,93 @@ rpolyVX10Loop:
  
  mov r0, #0
  b rpolyPTCEnd
+
+@ 2 - (vx10,c) - packed data, vertex color
+rpolyVX10Col:
+ ldr r0, =ioVERTEX_BEGIN
+ str r6, [r0]
+ ldr r6, =ioVERTEX_COLOR
+ 
+ ldr r0, =ioVERTEX_10BIT
+ ldr r1, [r5, #arrEntryDimension1SizeOfs]
+rpolyVX10ColLoop:
+ ldr r2, [r4] @ vertex coords
+ add r4, r4, #4
+ ldr r3, [r4] @ colors
+ add r4, r4, #4
+ 
+ str r3, [r6]
+ str r2, [r0]
+ 
+ subs r1, r1, #1
+ bne rpolyVX10ColLoop
+ 
+ ldr r0, =ioVERTEX_END
+ str r0, [r0] @ dummy write
+ 
+ mov r0, #0
+ b rpolyPTCEnd
+
+rpolySpecialModel:
+ @ r4 - model ID
+ bl calcOffsetAddress
+ mov r0, r4
+ @ probably a more efficient method but I don't want to figure out offsets rn
+ cmp r0, #0
+ asm_addr r1, cubeModel
+ moveq r0, r1
+ cmp r0, #1
+ asm_addr r1, octahedronModel
+ moveq r0, r1
+ cmp r0, #2
+ asm_addr r1, coneModel
+ moveq r0, r1
+ cmp r0, #3
+ asm_addr r1, icosahedronModel
+ moveq r0, r1
+ cmp r0, #4
+ asm_addr r1, cylinderModel
+ moveq r0, r1
+ cmp r0, #5
+ ldr r1, =torusModel
+ asm_addr r1, torusModel
+ moveq r0, r1
+ 
+ @ r0 is model ptr
+ ldr r6, [r0] @ poly type
+ ldr r1, [r0, #4] @ number of vertices
+ add r4, r0, #8 @ points to model info
+ 
+ ldr r0, =ioVERTEX_BEGIN
+ str r6, [r0]
+ 
+ ldr r0, =ioVERTEX_10BIT
+ b rpolyVX10Loop
+
+@ PTC format:
+@  RCOLOR vertcolor
+@ 
+@ vertcolor should be 555 RGB, higher bits ignored. PTC integer.
+@ 
+rcolorPTC:
+ stmdb sp!,{r4, r11, lr}
+ sub sp, sp, #8
+ mov r1, sp
+ mov r2, #1 @ RENDER expects one argument
+ bptc r4, parseCommandArgs
+ @ exit early if parser error
+ cmp r0, #0
+ bne rcolorPTCEnd
+ 
+ ldr r0, [sp, #0x4] @ first arg
+ lsr r0, r0, #12 @ get integer bit
+ ldr r1, =ioVERTEX_COLOR
+ str r0, [r1] @ wow incredible
+ 
+ mov r0, #0
+rcolorPTCEnd:
+ add sp, sp, #0x8
+ ldmia sp!,{r4, r11, pc}
 
 @ copy r1 to r0 (null-terminated)
 @ destroys r2
@@ -506,5 +600,141 @@ rpolyString:
 wide_str 'R','P','O','L','Y'
 .2byte 0,0,0
 
+rcolorString:
+wide_str 'R','C','O','L','O','R'
+.2byte 0,0
+
 mtxModePrevious:
-.byte mtxFirstMode
+.4byte mtxFirstMode
+
+cubeModel:
+@ type
+.4byte 1
+@ number of verts
+.4byte 24
+@ vertex info
+.4byte 0x3c010040, 0x3c0103c0, 0x40103c0, 0x4010040
+.4byte 0x40f0040, 0x4010040, 0x40103c0, 0x40f03c0
+.4byte 0x40f03c0, 0x40103c0, 0x3c0103c0, 0x3c0f03c0
+.4byte 0x3c0f03c0, 0x3c0f0040, 0x40f0040, 0x40f03c0
+.4byte 0x3c0f0040, 0x3c010040, 0x4010040, 0x40f0040
+.4byte 0x3c0f03c0, 0x3c0103c0, 0x3c010040, 0x3c0f0040
+
+octahedronModel:
+@ Type of polygon
+.4byte 0
+@ Number of vertices
+.4byte 24
+.4byte 0xf0000, 0x4000000, 0x3c0
+.4byte 0x4000000, 0x10000, 0x3c0
+.4byte 0xf0000, 0x3c0, 0x3c000000
+.4byte 0x10000, 0x3c000000, 0x3c0
+.4byte 0xf0000, 0x40, 0x4000000
+.4byte 0x10000, 0x4000000, 0x40
+.4byte 0xf0000, 0x3c000000, 0x40
+.4byte 0x10000, 0x40, 0x3c000000
+
+coneModel:
+@ Type of polygon
+.4byte 0
+@ Number of vertices
+.4byte 36
+.4byte 0xf0000, 0x3c0f0000, 0x3e0f0037
+.4byte 0x3c0f0000, 0x10000, 0x3e0f0037
+.4byte 0xf0000, 0x3e0f0037, 0x20f0037
+.4byte 0x3e0f0037, 0x10000, 0x20f0037
+.4byte 0xf0000, 0x20f0037, 0x40f0000
+.4byte 0x20f0037, 0x10000, 0x40f0000
+.4byte 0xf0000, 0x40f0000, 0x20f03c9
+.4byte 0x40f0000, 0x10000, 0x20f03c9
+.4byte 0xf0000, 0x20f03c9, 0x3e0f03c9
+.4byte 0x20f03c9, 0x10000, 0x3e0f03c9
+.4byte 0xf0000, 0x3e0f03c9, 0x3c0f0000
+.4byte 0x3e0f03c9, 0x10000, 0x3c0f0000
+
+icosahedronModel:
+@ Type of polygon
+.4byte 0
+@ Number of vertices
+.4byte 60
+.4byte 0xf0000, 0x22f8c2e, 0x36f8fee
+.4byte 0x22f8c2e, 0xf0000, 0x3def8c2e
+.4byte 0xf0000, 0x36f8fee, 0xf8fc7
+.4byte 0xf0000, 0xf8fc7, 0x3caf8fee
+.4byte 0xf0000, 0x3caf8fee, 0x3def8c2e
+.4byte 0x22f8c2e, 0x3def8c2e, 0x7439
+.4byte 0x36f8fee, 0x22f8c2e, 0x3607412
+.4byte 0xf8fc7, 0x36f8fee, 0x22077d2
+.4byte 0x3caf8fee, 0xf8fc7, 0x3de077d2
+.4byte 0x3def8c2e, 0x3caf8fee, 0x3ca07412
+.4byte 0x22f8c2e, 0x7439, 0x3607412
+.4byte 0x36f8fee, 0x3607412, 0x22077d2
+.4byte 0xf8fc7, 0x22077d2, 0x3de077d2
+.4byte 0x3caf8fee, 0x3de077d2, 0x3ca07412
+.4byte 0x3def8c2e, 0x3ca07412, 0x7439
+.4byte 0x3607412, 0x7439, 0x10000
+.4byte 0x22077d2, 0x3607412, 0x10000
+.4byte 0x3de077d2, 0x22077d2, 0x10000
+.4byte 0x3ca07412, 0x3de077d2, 0x10000
+.4byte 0x7439, 0x3ca07412, 0x10000
+
+cylinderModel:
+@ Type of polygon
+.4byte 0
+@ Number of vertices
+.4byte 72
+.4byte 0xf0000, 0x3c0f0000, 0x3e0f0037
+.4byte 0x10000, 0x3e010037, 0x3c010000
+.4byte 0x3c010000, 0x3e0f0037, 0x3c0f0000
+.4byte 0xf0000, 0x3e0f0037, 0x20f0037
+.4byte 0x10000, 0x2010037, 0x3e010037
+.4byte 0x3e010037, 0x20f0037, 0x3e0f0037
+.4byte 0xf0000, 0x20f0037, 0x40f0000
+.4byte 0x10000, 0x4010000, 0x2010037
+.4byte 0x2010037, 0x40f0000, 0x20f0037
+.4byte 0xf0000, 0x40f0000, 0x20f03c9
+.4byte 0x10000, 0x20103c9, 0x4010000
+.4byte 0x4010000, 0x20f03c9, 0x40f0000
+.4byte 0xf0000, 0x20f03c9, 0x3e0f03c9
+.4byte 0x10000, 0x3e0103c9, 0x20103c9
+.4byte 0x20103c9, 0x3e0f03c9, 0x20f03c9
+.4byte 0xf0000, 0x3e0f03c9, 0x3c0f0000
+.4byte 0x10000, 0x3c010000, 0x3e0103c9
+.4byte 0x3e0103c9, 0x3c0f0000, 0x3e0f03c9
+.4byte 0x3c010000, 0x3e010037, 0x3e0f0037
+.4byte 0x3e010037, 0x2010037, 0x20f0037
+.4byte 0x2010037, 0x4010000, 0x40f0000
+.4byte 0x4010000, 0x20103c9, 0x20f03c9
+.4byte 0x20103c9, 0x3e0103c9, 0x3e0f03c9
+.4byte 0x3e0103c9, 0x3c010000, 0x3c0f0000
+
+torusModel:
+@ Type of polygon
+.4byte 1
+@ Number of vertices
+.4byte 96
+.4byte 0x50, 0x3bb00028, 0x3c904020, 0x4040
+.4byte 0x4040, 0x3c904020, 0x3d600018, 0x30
+.4byte 0x30, 0x3d600018, 0x3c9fc020, 0xfc040
+.4byte 0xfc040, 0x3c9fc020, 0x3bb00028, 0x50
+.4byte 0x3bb00028, 0x3bb003d8, 0x3c9043e0, 0x3c904020
+.4byte 0x3c904020, 0x3c9043e0, 0x3d6003e8, 0x3d600018
+.4byte 0x3d600018, 0x3d6003e8, 0x3c9fc3e0, 0x3c9fc020
+.4byte 0x3c9fc020, 0x3c9fc3e0, 0x3bb003d8, 0x3bb00028
+.4byte 0x3bb003d8, 0x3b0, 0x43c0, 0x3c9043e0
+.4byte 0x3c9043e0, 0x43c0, 0x3d0, 0x3d6003e8
+.4byte 0x3d6003e8, 0x3d0, 0xfc3c0, 0x3c9fc3e0
+.4byte 0x3c9fc3e0, 0xfc3c0, 0x3b0, 0x3bb003d8
+.4byte 0x3b0, 0x45003d8, 0x37043e0, 0x43c0
+.4byte 0x43c0, 0x37043e0, 0x2a003e8, 0x3d0
+.4byte 0x3d0, 0x2a003e8, 0x37fc3e0, 0xfc3c0
+.4byte 0xfc3c0, 0x37fc3e0, 0x45003d8, 0x3b0
+.4byte 0x45003d8, 0x4500028, 0x3704020, 0x37043e0
+.4byte 0x37043e0, 0x3704020, 0x2a00018, 0x2a003e8
+.4byte 0x2a003e8, 0x2a00018, 0x37fc020, 0x37fc3e0
+.4byte 0x37fc3e0, 0x37fc020, 0x4500028, 0x45003d8
+.4byte 0x4500028, 0x50, 0x4040, 0x3704020
+.4byte 0x3704020, 0x4040, 0x30, 0x2a00018
+.4byte 0x2a00018, 0x30, 0xfc040, 0x37fc020
+.4byte 0x37fc020, 0xfc040, 0x50, 0x4500028
+

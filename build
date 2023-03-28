@@ -22,7 +22,8 @@ fi
 
 # Actual ASM codes
 echo "Assembling file"
-arm-none-eabi-as $1 -o out.elf
+arm-none-eabi-as $1 -o out.elf -Wall
+arm-none-eabi-ld out.elf
 arm-none-eabi-objcopy -O binary out.elf out.bin
 
 rm out.elf
