@@ -366,6 +366,7 @@ rmtxRotateZ:
 @   0 - (vx10) - packed VX10 data
 @   1 - (vx10) - packed VX10 data
 @   2 - (vx10, vc) - packed VX10 data + colors
+@   3 - (vx10, vc, uv) - packed VX10 data + colors
 rpolyPTC:
  stmdb sp!,{r4, r5, r6, r10, r11, lr}
  sub sp, sp, #0x10
@@ -424,6 +425,8 @@ rpolyPTC:
  ldr r0, [r5, #arrEntryDimension2SizeOfs]
  cmp r0, #1
  beq rpolyVX10
+ cmp r0, #2
+ beq rpolyVX10Col
  
  mov r0, #errILLEGAL_FUNCTION_CALL
 rpolyPTCEnd:
@@ -464,6 +467,7 @@ rpolyVX10ColLoop:
  ldr r2, [r4] @ vertex coords
  add r4, r4, #4
  ldr r3, [r4] @ colors
+ lsr r3, r3, #12 @ convert 20.12 to int
  add r4, r4, #4
  
  str r3, [r6]
